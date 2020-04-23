@@ -18,7 +18,7 @@
                         </el-tooltip>
                     </div>
                     <div class="item-right-button">
-                        <el-button @click="addMessage" class="item-button" size="small">新增信息</el-button>
+                        <el-button @click="addData" class="item-button" size="small">新增信息</el-button>
                         <el-button @click="openTable" type="text" class="item-button" size="small"><i
                                 :class="[tableStatus ? 'el-icon-full-screen':'el-icon-aim']"></i>{{ tableStatus ?
                             '折叠':'展开' }}
@@ -90,15 +90,70 @@
                         </el-table-column>
                     </el-table>
                 </template>
+
             </section>
             <!--底部新增-->
             <section class="bottom-add">
                 <h4>新增自定义分组</h4>
             </section>
+
         </basic-container>
         <div class=" member-bottom-card">
             <el-button class="member-bottom-button" size="mini" type="primary">保存</el-button>
         </div>
+        <el-dialog
+                custom-class="addData-dialog"
+                :modal-append-to-body="false"
+                title="新增信息"
+                :visible.sync="dialogVisible"
+                width="400px">
+            <el-form  ref="form" :rules="rules" label-position="right" label-width="70px" :model="form">
+                <el-form-item label="信息名称" prop="name">
+                    <el-input maxlength="6"
+                              show-word-limit
+                              placeholder="请填写信息名称"
+                              size="mini"
+                              v-model="form.name">
+                    </el-input>
+                </el-form-item>
+                <el-form-item label="信息格式" prop="type">
+                    <el-select size="mini" style="width: 290px" v-model="form.type" placeholder="请选择活动区域">
+                        <el-option label="文本" value="1"></el-option>
+                        <el-option label="日期" value="2"></el-option>
+                        <el-option label="预设选项" value="3"></el-option>
+                    </el-select>
+                </el-form-item>
+                <!-- 选择预设才可以选择-->
+                <el-row v-if="form.type === '3'">
+                    <el-form-item prop="selectText" label="选项内容">
+                        <el-col :span="18">
+                            <el-input
+                                    maxlength="10"
+                                    show-word-limit
+                                    size="mini"
+                                    v-model="form.selectText"></el-input>
+                        </el-col>
+                        <el-col :push="1" :span="4">
+                            <el-button size="mini">添加</el-button>
+                        </el-col>
+                    </el-form-item>
+                </el-row>
+                <el-form-item label="提示文案" prop="copy">
+                    <el-input
+                            maxlength="15"
+                            show-word-limit
+                            placeholder="请填写提示文案"
+                            size="mini"
+                            v-model="form.copy">
+                    </el-input>
+                </el-form-item>
+
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button size="mini" type="primary" @click="dialogVisible = false">保存</el-button>
+                <el-button class="dialog-button" type="text" size="mini" @click="dialogVisible = false">取消</el-button>
+            </div>
+        </el-dialog>
     </div>
 </template>
 
@@ -110,7 +165,10 @@
                 avtive: false,
                 tableStatus: true,
                 checked: false,
-                value: '',
+                dialogVisible: false,
+                form: {
+                    type: '1'
+                },
                 tableData: [{
                     date: '手机号',
                     isUse: true,
@@ -317,8 +375,17 @@
                         }
 
                     }
-                ]
-            }
+                ],
+                // 表单校验
+                rules: {
+                    name: [
+                        {required: true, message: "必须填写", trigger: "blur"}
+                    ],
+                    copy: [
+                        {required: true, message: "必须填写", trigger: "blur"}
+                    ]
+                }
+            };
         },
         methods: {
             customActive() {
@@ -327,8 +394,8 @@
             storesActive() {
                 this.avtive = !this.avtive
             },
-            addMessage() {
-
+            addData() {
+                this.dialogVisible = true;
             },
             openTable() {
                 this.tableStatus = !this.tableStatus;
@@ -347,7 +414,42 @@
             margin-left: 0 !important;
         }
 
+        /*dialog样式*/
+        .addData-dialog {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+
+            .el-dialog__title {
+                font-size: 13px;
+                font-weight: bold;
+            }
+
+            .el-dialog__body {
+                padding: 10px 20px;
+            }
+
+            .el-form-item {
+                margin-bottom: 2px;
+            }
+
+            .dialog-button {
+                color: #595961;
+                width: 56px;
+                height: 28px;
+                border: 1px solid #e2e3e4;
+                line-height: 1;
+                text-align: center;
+                display: inline-block;
+                margin-left: 10px !important;
+            }
+        }
+
     }
+
+    .el-select-dropdown, .el-select-dropdown .el-scrollbar__wrap {
+        height: auto !important;
+    }
+
 
     /*提示自定义*/
     .tooltip-top {
@@ -357,7 +459,7 @@
         border-color: #e3e2e5 !important;
 
         .el-tooltip__popper.is-light .popper__arrow {
-            border-right-color: #c2c9d9;
+            border-right-color: #fff !important;
         }
     }
 
@@ -396,12 +498,14 @@
 
     }
 </style>
+
 <style scoped lang="scss">
     .content {
-        position: relative;
-        .member-container{
-            margin-bottom: 80px;
+        .member-container {
+            margin-bottom: 20px;
+
         }
+
         header {
             .title {
                 display: inline-block;
@@ -428,6 +532,7 @@
             padding-left: 10px;
             padding-right: 10px;
             padding-bottom: 10px;
+
             .table-title {
                 display: flex;
                 justify-content: space-between;
@@ -499,13 +604,13 @@
         border-radius: 10px 10px 0 0;
         height: 60px;
         background: #fff;
-        position: fixed;
-        z-index: 9999;
-        bottom: 0;
+        position: sticky;
+        bottom: 30px;
+        z-index: 100;
         width: 100%;
         display: flex;
-        justify-content: center; /* 水平居中 */
         align-items: center; /* 垂直居中 */
+        justify-content: center;
 
         .member-bottom-button {
             width: 90px;
@@ -513,6 +618,4 @@
             border-color: #2589ff;
         }
     }
-
-
 </style>
