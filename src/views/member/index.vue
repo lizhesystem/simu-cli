@@ -6,10 +6,10 @@
                 <span @click="storesActive" :class="['title',avtive ? 'select-active':'']">归属门店</span>
             </header>
             <!--表格-->
-            <section class="member-table">
+            <section class="member-table" v-for="(tableGroup,index) in tableData" :key="index">
                 <div class="table-title">
                     <div class="item-title">
-                        <span>基础信息</span>
+                        <span>{{ tableGroup.groupName }}</span>
                         <el-tooltip
                                 popper-class="tooltip-top"
                                 effect="light" content="拖拽可调整信息在买家手机端显示的顺序，保存生效"
@@ -18,22 +18,22 @@
                         </el-tooltip>
                     </div>
                     <div class="item-right-button">
-                        <el-button @click="addData" class="item-button" size="small">新增信息</el-button>
-                        <el-button @click="openTable" type="text" class="item-button" size="small"><i
-                                :class="[tableStatus ? 'el-icon-full-screen':'el-icon-aim']"></i>{{ tableStatus ?
+                        <el-button @click="addData(tableGroup.id)" class="item-button" size="small">新增信息</el-button>
+                        <el-button @click="openTable(tableGroup.id)" type="text" class="item-button" size="small"><i
+                                :class="[tableGroup.tableStatus ? 'el-icon-full-screen':'el-icon-aim']"></i>{{
+                            tableGroup.tableStatus ?
                             '折叠':'展开' }}
                         </el-button>
                     </div>
                 </div>
-                <template v-if="tableStatus">
+                <template v-if="tableGroup.tableStatus">
                     <el-table
-                            :data="tableData"
+                            :data="tableGroup.groupDate"
                             style="width: 100%">
                         <el-table-column
-                                prop="date"
+                                prop="message"
                                 label="信息"
                                 width="160">
-                            <template></template>
                         </el-table-column>
                         <el-table-column
                                 prop="isUse"
@@ -69,7 +69,7 @@
                                 prop="type"
                                 label="信息格式">
                             <template slot-scope="scope">
-                                {{scope.row.formatType.type}}
+                                {{scope.row.type|messageType}}
                                 <div class="formatType-select" v-if="scope.row.formatType.select">
                                     <el-select size="mini"
                                                v-model=scope.row.formatType.value>
@@ -81,12 +81,19 @@
                                         </el-option>
                                     </el-select>
                                 </div>
-
                             </template>
                         </el-table-column>
                         <el-table-column
                                 width="220"
                                 label="操作">
+                            <template slot-scope="scope">
+                                <div v-if="scope.row.showOperate">
+                                    <el-button @click="editEvent(scope.row)" size="small" type="text">编辑</el-button>
+                                    <el-button @click="deleteEvent(scope.row)" style="padding-left: 18px" size="small"
+                                               type="text">删除
+                                    </el-button>
+                                </div>
+                            </template>
                         </el-table-column>
                     </el-table>
                 </template>
@@ -94,30 +101,33 @@
             </section>
             <!--底部新增-->
             <section class="bottom-add">
-                <h4>新增自定义分组</h4>
+                <h4 @click="addGroup">新增自定义分组</h4>
             </section>
 
         </basic-container>
+        <!--底部保存filex-->
         <div class=" member-bottom-card">
             <el-button class="member-bottom-button" size="mini" type="primary">保存</el-button>
         </div>
+        <!--新增dialog-->
         <el-dialog
+                @close="closedDialog"
                 custom-class="addData-dialog"
                 :modal-append-to-body="false"
-                title="新增信息"
+                :title="title"
                 :visible.sync="dialogVisible"
                 width="400px">
-            <el-form  ref="form" :rules="rules" label-position="right" label-width="70px" :model="form">
-                <el-form-item label="信息名称" prop="name">
+            <el-form ref="form" :rules="rules" label-position="right" label-width="80px" :model="form">
+                <el-form-item :inline-message="true" label="信息名称" prop="message">
                     <el-input maxlength="6"
                               show-word-limit
                               placeholder="请填写信息名称"
                               size="mini"
-                              v-model="form.name">
+                              v-model="form.message">
                     </el-input>
                 </el-form-item>
                 <el-form-item label="信息格式" prop="type">
-                    <el-select size="mini" style="width: 290px" v-model="form.type" placeholder="请选择活动区域">
+                    <el-select size="mini" style="width: 280px" v-model="form.type" placeholder="请选择活动区域">
                         <el-option label="文本" value="1"></el-option>
                         <el-option label="日期" value="2"></el-option>
                         <el-option label="预设选项" value="3"></el-option>
@@ -131,12 +141,25 @@
                                     maxlength="10"
                                     show-word-limit
                                     size="mini"
-                                    v-model="form.selectText"></el-input>
+                                    v-model="selectText"></el-input>
                         </el-col>
                         <el-col :push="1" :span="4">
-                            <el-button size="mini">添加</el-button>
+                            <el-button @click="addSelectText" size="mini">添加</el-button>
                         </el-col>
                     </el-form-item>
+                </el-row>
+                <!--tags-->
+                <el-row v-if="form.type === '3'">
+                    <el-col :push="5" :span="19">
+                        <el-tag class="item-tag"
+                                type="info"
+                                v-for="tag in tags"
+                                :key="tag.id"
+                                @close="removeTag(tag.id)"
+                                closable>
+                            {{tag.name}}
+                        </el-tag>
+                    </el-col>
                 </el-row>
                 <el-form-item label="提示文案" prop="copy">
                     <el-input
@@ -150,238 +173,307 @@
 
             </el-form>
             <div slot="footer" class="dialog-footer">
-                <el-button size="mini" type="primary" @click="dialogVisible = false">保存</el-button>
-                <el-button class="dialog-button" type="text" size="mini" @click="dialogVisible = false">取消</el-button>
+                <el-button size="mini" type="primary" @click="submitForm">保存</el-button>
+                <el-button class="dialog-button" type="text" size="mini" @click="cancel">取消</el-button>
+            </div>
+        </el-dialog>
+        <!--组的dialog-->
+        <el-dialog
+                @close="closedDialogGroup"
+                custom-class="addData-dialog"
+                :modal-append-to-body="false"
+                title="新增自定义分组"
+                :visible.sync="dialogVisibleGroup"
+                width="400px">
+            <el-form ref="groupForm" :rules="rulesGroup" label-position="right" label-width="80px" :model="groupForm">
+                <el-form-item :inline-message="true" label="分组名称" prop="groupName">
+                    <el-input maxlength="10"
+                              show-word-limit
+                              placeholder="请填写自定义分组名称"
+                              size="mini"
+                              v-model="groupForm.groupName">
+                    </el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button size="mini" type="primary" @click="submitGroup">保存</el-button>
+                <el-button class="dialog-button" type="text" size="mini" @click="cancelGroup">取消</el-button>
             </div>
         </el-dialog>
     </div>
 </template>
 
 <script>
+    import form from "../util/form";
+
     export default {
         name: 'index',
         data() {
             return {
                 avtive: false,
-                tableStatus: true,
                 checked: false,
                 dialogVisible: false,
+                dialogVisibleGroup: false,
+                // 预设信息
+                selectText: '',
+                title: '',
+                tags: [],
                 form: {
                     type: '1'
                 },
-                tableData: [{
-                    date: '手机号',
-                    isUse: true,
-                    isDisable: true,
-                    isMust: true,
-                    isEdit: false,
-                    formatType: {
-                        type: '文本'
-                    }
+                editForm: {},
+                groupForm: {},
+                tableData:
+                    [
+                        {
+                            id: '1',
+                            groupName: '基础信息',
+                            tableStatus: true,
+                            groupDate: [{
+                                gid: '1',
+                                message: '手机号',
+                                isUse: true,
+                                isDisable: true,
+                                isMust: true,
+                                isEdit: false,
+                                copy: '',
+                                type: '1',
+                                formatType: {}
 
-                }, {
-                    date: '身份证',
-                    isUse: false,
-                    isDisable: false,
-                    isMust: false,
-                    isEdit: false,
-                    formatType: {
-                        type: '文本'
-                    }
-                }, {
-                    date: '地址',
-                    isUse: false,
-                    isDisable: false,
-                    isMust: false,
-                    isEdit: false,
-                    formatType: {
-                        type: '文本'
-                    }
-                }, {
-                    date: '姓名',
-                    isUse: false,
-                    isDisable: false,
-                    isMust: false,
-                    isEdit: false,
-                    formatType: {
-                        type: '文本'
-                    }
-                }, {
-                    date: '邮箱',
-                    isUse: false,
-                    isDisable: false,
-                    isMust: false,
-                    isEdit: false,
-                    formatType: {
-                        type: '文本'
-                    }
-                }, {
-                    date: '生日',
-                    isUse: false,
-                    isDisable: false,
-                    isMust: false,
-                    isEdit: false,
-                    formatType: {
-                        type: '日期'
-                    }
-                }, {
-                    date: '性别',
-                    isUse: false,
-                    isDisable: false,
-                    isMust: false,
-                    isEdit: false,
-                    formatType: {
-                        type: '预设选项',
-                        select: true,
-                        value: '1',
-                        dict: [{
-                            value: '1',
-                            label: '未知'
-                        }, {
-                            value: '2',
-                            label: '男'
-                        }, {
-                            value: '3',
-                            label: '女'
-                        }],
-                    }
+                            }, {
+                                gid: '2',
+                                message: '身份证',
+                                isUse: false,
+                                isDisable: false,
+                                isMust: false,
+                                isEdit: false,
+                                copy: '',
+                                type: '1',
+                                formatType: {}
+                            }, {
+                                gid: '3',
+                                message: '地址',
+                                isUse: false,
+                                isDisable: false,
+                                isMust: false,
+                                isEdit: false,
+                                showOperate: false,
+                                copy: '',
+                                type: '1',
+                                formatType: {}
+                            }, {
+                                gid: '4',
+                                message: '姓名',
+                                isUse: false,
+                                isDisable: false,
+                                isMust: false,
+                                isEdit: false,
+                                showOperate: false,
+                                copy: '',
+                                type: '1',
+                                formatType: {}
+                            }, {
+                                gid: '5',
+                                message: '邮箱',
+                                isUse: false,
+                                isDisable: false,
+                                isMust: false,
+                                isEdit: false,
+                                showOperate: false,
+                                copy: '',
+                                type: '1',
+                                formatType: {}
+                            }, {
+                                gid: '6',
+                                message: '生日',
+                                isUse: false,
+                                isDisable: false,
+                                isMust: false,
+                                isEdit: false,
+                                showOperate: false,
+                                copy: '',
+                                type: '2',
+                                formatType: {}
+                            }, {
+                                gid: '7',
+                                message: '性别',
+                                isUse: false,
+                                isDisable: false,
+                                isMust: false,
+                                isEdit: false,
+                                showOperate: false,
+                                copy: '',
+                                type: '3',
+                                formatType: {
+                                    select: true,
+                                    value: '1',
+                                    dict: [{
+                                        value: '1',
+                                        label: '未知'
+                                    }, {
+                                        value: '2',
+                                        label: '男'
+                                    }, {
+                                        value: '3',
+                                        label: '女'
+                                    }],
+                                }
 
-                }, {
-                    date: '教育背景',
-                    isUse: false,
-                    isDisable: false,
-                    isMust: false,
-                    isEdit: false,
-                    formatType: {
-                        type: '预设选项',
-                        select: true,
-                        value: '1',
-                        dict: [{
-                            value: '1',
-                            label: '小学'
-                        }, {
-                            value: '2',
-                            label: '初中'
-                        }, {
-                            value: '3',
-                            label: '高中'
-                        }, {
-                            value: '4',
-                            label: '专科'
-                        }, {
-                            value: '5',
-                            label: '本科'
-                        }, {
-                            value: '6',
-                            label: '硕士'
-                        }, {
-                            value: '7',
-                            label: '博士'
-                        }],
-                    }
-                },
-                    {
-                        date: '爱改',
-                        isUse: false,
-                        isDisable: false,
-                        isMust: false,
-                        isEdit: false,
-                        formatType: {
-                            type: '预设选项',
-                            select: true,
-                            value: '1',
-                            dict: [{
-                                value: '1',
-                                label: '游戏'
                             }, {
-                                value: '2',
-                                label: '阅读'
-                            }, {
-                                value: '3',
-                                label: '音乐'
-                            }, {
-                                value: '4',
-                                label: '运动'
-                            }, {
-                                value: '5',
-                                label: '动漫'
-                            }, {
-                                value: '6',
-                                label: '旅行'
-                            }, {
-                                value: '7',
-                                label: '居家'
-                            }],
-                        }
-
-                    },
-                    {
-                        date: '收入',
-                        isUse: false,
-                        isDisable: false,
-                        isMust: false,
-                        isEdit: false,
-                        formatType: {
-                            type: '预设选项',
-                            select: true,
-                            value: '1',
-                            dict: [{
-                                value: '1',
-                                label: '5万以下'
-                            }, {
-                                value: '2',
-                                label: '5-15万'
-                            }, {
-                                value: '3',
-                                label: '15-30万'
-                            }, {
-                                value: '4',
-                                label: '30万以上'
-                            }],
-                        }
-
-                    },
-                    {
-                        date: '行业',
-                        isUse: false,
-                        isDisable: false,
-                        isMust: false,
-                        isEdit: false,
-                        formatType: {
-                            type: '预设选项',
-                            select: true,
-                            value: '1',
-                            dict: [{
-                                value: '1',
-                                label: 'IT/互联网/通讯/电子'
-                            }, {
-                                value: '2',
-                                label: '金融/投资/财会'
-                            }, {
-                                value: '3',
-                                label: '市场/销售/客服'
-                            }, {
-                                value: '4',
-                                label: '广告/媒体/出版/艺术'
+                                gid: '8',
+                                message: '教育背景',
+                                isUse: false,
+                                isDisable: false,
+                                isMust: false,
+                                isEdit: false,
+                                showOperate: false,
+                                copy: '',
+                                type: '3',
+                                formatType: {
+                                    select: true,
+                                    value: '1',
+                                    dict: [{
+                                        value: '1',
+                                        label: '小学'
+                                    }, {
+                                        value: '2',
+                                        label: '初中'
+                                    }, {
+                                        value: '3',
+                                        label: '高中'
+                                    }, {
+                                        value: '4',
+                                        label: '专科'
+                                    }, {
+                                        value: '5',
+                                        label: '本科'
+                                    }, {
+                                        value: '6',
+                                        label: '硕士'
+                                    }, {
+                                        value: '7',
+                                        label: '博士'
+                                    }],
+                                }
                             },
                                 {
-                                    value: '5',
-                                    label: '人事/行政/管理'
+                                    gid: '9',
+                                    message: '爱好',
+                                    isUse: false,
+                                    isDisable: false,
+                                    isMust: false,
+                                    isEdit: false,
+                                    showOperate: false,
+                                    copy: '',
+                                    type: '3',
+                                    formatType: {
+                                        select: true,
+                                        value: '1',
+                                        dict: [{
+                                            value: '1',
+                                            label: '游戏'
+                                        }, {
+                                            value: '2',
+                                            label: '阅读'
+                                        }, {
+                                            value: '3',
+                                            label: '音乐'
+                                        }, {
+                                            value: '4',
+                                            label: '运动'
+                                        }, {
+                                            value: '5',
+                                            label: '动漫'
+                                        }, {
+                                            value: '6',
+                                            label: '旅行'
+                                        }, {
+                                            value: '7',
+                                            label: '居家'
+                                        }],
+                                    }
+
                                 },
                                 {
-                                    value: '6',
-                                    label: '消费品/贸易/物流'
-                                }],
-                        }
+                                    gid: '10',
+                                    message: '收入',
+                                    isUse: false,
+                                    isDisable: false,
+                                    isMust: false,
+                                    isEdit: false,
+                                    showOperate: false,
+                                    copy: '',
+                                    type: '3',
+                                    formatType: {
+                                        select: true,
+                                        value: '1',
+                                        dict: [{
+                                            value: '1',
+                                            label: '5万以下'
+                                        }, {
+                                            value: '2',
+                                            label: '5-15万'
+                                        }, {
+                                            value: '3',
+                                            label: '15-30万'
+                                        }, {
+                                            value: '4',
+                                            label: '30万以上'
+                                        }],
+                                    }
 
-                    }
-                ],
+                                },
+                                {
+                                    gid: '11',
+                                    message: '行业',
+                                    isUse: false,
+                                    isDisable: false,
+                                    isMust: false,
+                                    isEdit: false,
+                                    showOperate: false,
+                                    copy: '',
+                                    type: '3',
+                                    formatType: {
+                                        select: true,
+                                        value: '1',
+                                        dict: [{
+                                            value: '1',
+                                            label: 'IT/互联网/通讯/电子'
+                                        }, {
+                                            value: '2',
+                                            label: '金融/投资/财会'
+                                        }, {
+                                            value: '3',
+                                            label: '市场/销售/客服'
+                                        }, {
+                                            value: '4',
+                                            label: '广告/媒体/出版/艺术'
+                                        },
+                                            {
+                                                value: '5',
+                                                label: '人事/行政/管理'
+                                            },
+                                            {
+                                                value: '6',
+                                                label: '消费品/贸易/物流'
+                                            }],
+                                    }
+
+                                }
+                            ],
+
+                        }
+                    ],
                 // 表单校验
                 rules: {
-                    name: [
+                    message: [
                         {required: true, message: "必须填写", trigger: "blur"}
                     ],
                     copy: [
+                        {required: true, message: "必须填写", trigger: "blur"}
+                    ]
+                }, rulesGroup: {
+                    groupName: [
                         {required: true, message: "必须填写", trigger: "blur"}
                     ]
                 }
@@ -394,11 +486,185 @@
             storesActive() {
                 this.avtive = !this.avtive
             },
-            addData() {
+            addData(id) {
+                this.title = '新增信息';
+                for (let i = 0; i < this.tableData.length; i++) {
+                    if (this.tableData[i].id === id) {
+                        // id赋值给key,区分表单
+                        this.form.key = this.tableData[i].id;
+                    }
+                }
                 this.dialogVisible = true;
             },
-            openTable() {
-                this.tableStatus = !this.tableStatus;
+            // 折叠关闭事件
+            openTable(id) {
+                for (let i = 0; i < this.tableData.length; i++) {
+                    if (this.tableData[i].id === id) {
+                        this.tableData[i].tableStatus = !this.tableData[i].tableStatus
+                    }
+                }
+            },
+            // 添加预设信息
+            addSelectText() {
+                let num = Date.now().toString();
+                if (this.selectText === '') return this.$message.warning('请输入预设信息');
+                const selectText = this.selectText.trim();
+                let obj = {id: num, name: selectText};
+                this.tags.push(obj)
+            },
+            // 删除预设信息
+            removeTag(id) {
+                this.tags.splice(this.tags.findIndex(i => i.id === id), 1)
+            },
+            // 关闭dialog清空
+            closedDialog() {
+                this.tags = [];
+                this.selectText = '';
+            },
+            // 保存提交
+            submitForm() {
+                this.$refs["form"].validate(valid => {
+                    if (valid) {
+                        if (this.editForm === 1) {
+                            // 修改
+                            const message = this.form.message.trim();
+                            const copy = this.form.copy.trim();
+                            const gid = this.form.gid; // 获取gid
+                            const obj = this.handleFormatType(message, copy, gid);
+                            for (let i = 0; i < this.tableData.length; i++) {
+                                const table = this.tableData[i];
+                                for (let j = 0; j < table.groupDate.length; j++) {
+                                    if (table.groupDate[j].gid === gid) {
+                                        table.groupDate[j] = obj;
+                                        this.cancel();
+                                        this.$message.success('修改成功')
+                                    }
+                                }
+                            }
+                        } else {
+                            // 新增
+                            const message = this.form.message.trim();
+                            const copy = this.form.copy.trim();
+                            const gid = Date.now().toString(); // 生成gid
+                            const obj = this.handleFormatType(message, copy, gid);
+                            for (let i = 0; i < this.tableData.length; i++) {
+                                const table = this.tableData[i];
+                                if (this.form.key === table.id) {
+                                    if (table.groupDate.filter(i => i.messages == name).length > 0) {
+                                        return this.$message.error('信息名称不能重复')
+                                    } else {
+                                        table.groupDate.push(obj);
+                                        this.cancel();
+                                        this.$message.success('新增成功')
+                                    }
+                                }
+                            }
+                        }
+                    }
+                })
+            },
+            // 取消
+            cancel() {
+                this.dialogVisible = false;
+                this.form = {
+                    type: '1',
+                    name: undefined,
+                    copy: undefined,
+                    key: undefined
+                };
+                this.closedDialog()
+            },
+            addGroup() {
+                this.dialogVisibleGroup = true;
+            },
+            closedDialogGroup() {
+
+            },
+            editEvent(data) {
+                this.title = '修改信息';
+                this.dialogVisible = true;
+                this.form = data;
+                this.editForm = 1;
+            },
+            deleteEvent(data) {
+                console.log(data);
+                for (let i = 0; i < this.tableData.length; i++) {
+                    const table = this.tableData[i];
+                    for (let j = 0; j < table.groupDate.length; j++) {
+                        if (data.gid === table.groupDate[j].gid) {
+                            table.groupDate.splice(j, 1);
+                        }
+                    }
+
+                }
+                this.$message.success('删除成功');
+            },
+            // 提交分组
+            submitGroup() {
+                this.$refs["groupForm"].validate(valid => {
+                    if (valid) {
+                        // 新增
+                        const groupName = this.groupForm.groupName.trim();
+                        const id = Date.now().toString();
+                        const obj = {
+                            id: id,
+                            groupName: groupName,
+                            tableStatus: true,
+                            groupDate: []
+                        };
+                        // 名称是否重复
+                        if (this.tableData.filter(i => i.groupName == groupName).length > 0) {
+                            return this.$message.error('分组名称重复,请重新输入!')
+                        } else {
+                            this.tableData.push(obj);
+                            this.dialogVisibleGroup = false;
+                            this.groupForm.groupName = '';
+                            this.$message.success('保存成功')
+                        }
+                    }
+                })
+            },
+            cancelGroup() {
+                this.groupForm.groupName = '';
+                this.dialogVisibleGroup = false;
+            },
+            // form处理
+            handleFormatType(message, copy, gid) {
+
+                let formatType = {};
+                let dict = [];
+                let type = this.form.type;
+                if (type === '3') {
+                    this.tags.forEach(i => {
+                        dict.push({value: i.id, label: i.name})
+                    });
+                    formatType.select = true;
+                    formatType.dict = dict;
+                    formatType.value = dict[0].value
+                }
+                return {
+                    gid: gid,
+                    message: message,
+                    isUse: false,
+                    isDisable: false,
+                    isMust: false,
+                    isEdit: false,
+                    copy: copy,
+                    type: type,
+                    showOperate: true,
+                    formatType: formatType
+                };
+            }
+        },
+        filters: {
+            messageType(type) {
+                if (type === '1') {
+                    return '文本'
+                } else if (type === '2') {
+                    return '日期'
+                } else {
+                    return '预设选项'
+                }
             }
         }
     }
@@ -442,6 +708,15 @@
                 display: inline-block;
                 margin-left: 10px !important;
             }
+        }
+
+        /*tag样式*/
+
+        .item-tag {
+            background: #F2F2F6 !important;
+            margin: 4px 6px;
+            border: none;
+            color: #595961;
         }
 
     }
@@ -605,6 +880,7 @@
         height: 60px;
         background: #fff;
         position: sticky;
+        /*在 viewport 视口滚动到元素 top 距离小于 30px 之前，元素为相对定位。之后，元素将固定在与顶部距离 30px 的位置，直到 viewport 视口回滚到阈值以下。*/
         bottom: 30px;
         z-index: 100;
         width: 100%;
