@@ -19,6 +19,13 @@
                     </div>
                     <div class="item-right-button">
                         <el-button @click="addData(tableGroup.id)" class="item-button" size="small">新增信息</el-button>
+                        <el-button v-if="tableGroup.id !== '1'" @click="editGroup(tableGroup.id)" class="item-button"
+                                   size="small">编辑
+                        </el-button>
+                        <el-button v-if="tableGroup.id !== '1'" @click="delGroup(tableGroup.id)" class="item-button"
+                                   size="small">删除
+                        </el-button>
+
                         <el-button @click="openTable(tableGroup.id)" type="text" class="item-button" size="small"><i
                                 :class="[tableGroup.tableStatus ? 'el-icon-full-screen':'el-icon-aim']"></i>{{
                             tableGroup.tableStatus ?
@@ -103,11 +110,10 @@
             <section class="bottom-add">
                 <h4 @click="addGroup">新增自定义分组</h4>
             </section>
-
         </basic-container>
         <!--底部保存filex-->
         <div class=" member-bottom-card">
-            <el-button class="member-bottom-button" size="mini" type="primary">保存</el-button>
+            <el-button class="member-bottom-button" @click="submitAll" size="mini" type="primary">保存</el-button>
         </div>
         <!--新增dialog-->
         <el-dialog
@@ -157,7 +163,7 @@
                                 :key="tag.id"
                                 @close="removeTag(tag.id)"
                                 closable>
-                            {{tag.name}}
+                            {{ tag.name }}
                         </el-tag>
                     </el-col>
                 </el-row>
@@ -182,7 +188,7 @@
                 @close="closedDialogGroup"
                 custom-class="addData-dialog"
                 :modal-append-to-body="false"
-                title="新增自定义分组"
+                :title="groupTitle"
                 :visible.sync="dialogVisibleGroup"
                 width="400px">
             <el-form ref="groupForm" :rules="rulesGroup" label-position="right" label-width="80px" :model="groupForm">
@@ -204,8 +210,6 @@
 </template>
 
 <script>
-    import form from "../util/form";
-
     export default {
         name: 'index',
         data() {
@@ -217,6 +221,7 @@
                 // 预设信息
                 selectText: '',
                 title: '',
+                groupTitle: '',
                 tags: [],
                 form: {
                     type: '1'
@@ -486,6 +491,9 @@
                 this.avtive = !this.avtive
             },
             addData(id) {
+                this.form = {
+                    type: '1'
+                };
                 this.title = '新增信息';
                 for (let i = 0; i < this.tableData.length; i++) {
                     if (this.tableData[i].id === id) {
@@ -506,7 +514,7 @@
             // 添加预设信息
             addSelectText() {
                 let num = Date.now().toString();
-                if (this.selectText === '') return this.$message.warning('请输入预设信息');
+                if (this.selectText.trim() === '') return this.$message.warning('请输入预设信息');
                 const selectText = this.selectText.trim();
                 let obj = {id: num, name: selectText};
                 this.tags.push(obj)
@@ -527,7 +535,9 @@
                         if (this.form.gid) {
                             // 修改
                             console.log('ggggggggggggg')
-
+                            if (this.form.type === '3' && this.tags.length === 0) {
+                                return this.$message.warning('请选择预设选项')
+                            }
                             const message = this.form.message.trim();
                             const copy = this.form.copy.trim();
                             const gid = this.form.gid; // 获取gid
@@ -536,16 +546,20 @@
                                 const table = this.tableData[i];
                                 for (let j = 0; j < table.groupDate.length; j++) {
                                     if (table.groupDate[j].gid === gid) {
-                                        // 这里应该有问题！
-                                        table.groupDate[j] = obj;
+                                        // 先删再插入,模拟数据需要
+                                        table.groupDate.splice(j, 1, obj);
                                         this.cancel();
                                         this.$message.success('修改成功')
+                                        console.log(table.groupDate)
                                     }
                                 }
                             }
                         } else {
                             // 新增
                             console.log('xxxxxxxxxxx')
+                            if (this.form.type === '3' && this.tags.length === 0) {
+                                return this.$message.warning('请选择预设选项')
+                            }
                             const message = this.form.message.trim();
                             const copy = this.form.copy.trim();
                             const gid = Date.now().toString(); // 生成gid
@@ -578,6 +592,7 @@
                 this.closedDialog()
             },
             addGroup() {
+                this.groupTitle = '新增自定义分组';
                 this.dialogVisibleGroup = true;
             },
             closedDialogGroup() {
@@ -585,20 +600,24 @@
             },
             editEvent(data) {
                 this.title = '修改信息';
-                console.log(data);
                 this.dialogVisible = true;
                 for (let i = 0; i < this.tableData.length; i++) {
                     const table = this.tableData[i];
                     for (let j = 0; j < table.groupDate.length; j++) {
                         if (data.gid === table.groupDate[j].gid) {
-                            this.form = table.groupDate[j]
+                            this.form = table.groupDate[j];
+                            // 处理回显tags
+                            const dict = this.form.formatType.dict;
+                            if (dict !== undefined && dict.length > 0) {
+                                dict.forEach(i => {
+                                    this.tags.push({id: i.value, name: i.label})
+                                });
+                            }
                         }
                     }
-
                 }
             },
             deleteEvent(data) {
-                console.log(data);
                 for (let i = 0; i < this.tableData.length; i++) {
                     const table = this.tableData[i];
                     for (let j = 0; j < table.groupDate.length; j++) {
@@ -614,30 +633,73 @@
             submitGroup() {
                 this.$refs["groupForm"].validate(valid => {
                     if (valid) {
-                        // 新增
-                        const groupName = this.groupForm.groupName.trim();
-                        const id = Date.now().toString();
-                        const obj = {
-                            id: id,
-                            groupName: groupName,
-                            tableStatus: true,
-                            groupDate: []
-                        };
-                        // 名称是否重复
-                        if (this.tableData.filter(i => i.groupName == groupName).length > 0) {
-                            return this.$message.error('分组名称重复,请重新输入!')
-                        } else {
-                            this.tableData.push(obj);
+                        if (this.groupForm.fid) {
+                            // 修改
+                            console.log('修改')
+                            this.tableData.filter(i => i.id === this.groupForm.id)[0].groupName = this.groupForm.groupName.trim();
                             this.dialogVisibleGroup = false;
-                            this.groupForm.groupName = '';
-                            this.$message.success('保存成功')
+                            this.$message.success('修改成功')
+                        } else {
+                            // 新增
+                            console.log('新增')
+                            const groupName = this.groupForm.groupName.trim();
+                            const id = Date.now().toString();
+                            const fid = Date.now().toString();
+                            const obj = {
+                                id: id,
+                                fid: fid,
+                                groupName: groupName,
+                                tableStatus: true,
+                                groupDate: []
+                            };
+                            // 名称是否重复
+                            if (this.tableData.filter(i => i.groupName == groupName).length > 0) {
+                                return this.$message.error('分组名称重复,请重新输入!')
+                            } else {
+                                this.tableData.push(obj);
+                                this.dialogVisibleGroup = false;
+                                this.groupForm.groupName = '';
+                                this.$message.success('新增成功')
+                            }
                         }
                     }
                 })
             },
             cancelGroup() {
-                this.groupForm.groupName = '';
                 this.dialogVisibleGroup = false;
+            },
+            editGroup(id) {
+                this.groupTitle = '修改自定义分组';
+                this.dialogVisibleGroup = true;
+                this.groupForm = this.tableData.filter(i => i.id === id)[0];
+            },
+            delGroup(id) {
+                // 索引
+                const delId = this.tableData.findIndex(i => i.id === id);
+                this.$confirm('删除分组将同时删除该分组下的所有信息字段，是否确认删除？', '警告', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning',
+                }).then(() => {
+                    this.tableData.splice(delId, 1);
+                    this.$message({
+                        type: 'success',
+                        message: '删除成功!'
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                });
+            },
+            submitAll() {
+                const data = JSON.stringify(this.tableData)
+                this.$message({
+                    showClose: 'true',
+                    message: `提交成功，${data}`,
+                    type: 'success'
+                });
             },
             // form处理
             handleFormatType(message, copy, gid) {
@@ -645,7 +707,7 @@
                 let formatType = {};
                 let dict = [];
                 let type = this.form.type;
-                if (type === '3') {
+                if (type === '3' && this.tags.length > 0) {
                     this.tags.forEach(i => {
                         dict.push({value: i.id, label: i.name})
                     });
@@ -840,27 +902,26 @@
                 .item-right-button {
                     .item-button {
                         width: 90px;
+                        background-color: white;
+                        color: #595961;
+                        border-color: #e3e2e5;
+                        margin-right: 10px;
 
                         &:first-child {
                             color: #2589ff !important;
                             background-color: white;
                             border-color: #2589ff;
-                            margin-right: 10px;
+
                         }
 
                         &:last-child {
-                            background-color: white;
-                            color: #595961;
-                            border-color: #e3e2e5;
-
                             i {
-                                font-size: 15px;
+                                font-size: 13px;
                                 margin-right: 5px;
                             }
-
                         }
 
-                        &:last-child:hover {
+                        &:hover {
                             color: #2589ff !important;
                             background-color: white;
                             border-color: #2589ff;
