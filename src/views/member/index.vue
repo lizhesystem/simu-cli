@@ -221,7 +221,6 @@
                 form: {
                     type: '1'
                 },
-                editForm: {},
                 groupForm: {},
                 tableData:
                     [
@@ -525,8 +524,10 @@
             submitForm() {
                 this.$refs["form"].validate(valid => {
                     if (valid) {
-                        if (this.editForm === 1) {
+                        if (this.form.gid) {
                             // 修改
+                            console.log('ggggggggggggg')
+
                             const message = this.form.message.trim();
                             const copy = this.form.copy.trim();
                             const gid = this.form.gid; // 获取gid
@@ -535,6 +536,7 @@
                                 const table = this.tableData[i];
                                 for (let j = 0; j < table.groupDate.length; j++) {
                                     if (table.groupDate[j].gid === gid) {
+                                        // 这里应该有问题！
                                         table.groupDate[j] = obj;
                                         this.cancel();
                                         this.$message.success('修改成功')
@@ -543,6 +545,7 @@
                             }
                         } else {
                             // 新增
+                            console.log('xxxxxxxxxxx')
                             const message = this.form.message.trim();
                             const copy = this.form.copy.trim();
                             const gid = Date.now().toString(); // 生成gid
@@ -582,9 +585,17 @@
             },
             editEvent(data) {
                 this.title = '修改信息';
+                console.log(data);
                 this.dialogVisible = true;
-                this.form = data;
-                this.editForm = 1;
+                for (let i = 0; i < this.tableData.length; i++) {
+                    const table = this.tableData[i];
+                    for (let j = 0; j < table.groupDate.length; j++) {
+                        if (data.gid === table.groupDate[j].gid) {
+                            this.form = table.groupDate[j]
+                        }
+                    }
+
+                }
             },
             deleteEvent(data) {
                 console.log(data);
