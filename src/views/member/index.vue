@@ -1,232 +1,257 @@
 <template>
-    <div class="content">
-        <basic-container class="member-container">
-            <header>
-                <span @click="customActive" :class="['title',avtive ? '':'select-active']">客户资料</span>
-                <span @click="storesActive" :class="['title',avtive ? 'select-active':'']">归属门店</span>
-            </header>
-            <!--表格-->
-            <section class="member-table" v-for="(tableGroup,index) in tableData" :key="index">
-                <div class="table-title">
-                    <div class="item-title">
-                        <span>{{ tableGroup.groupName }}</span>
-                        <el-tooltip
-                                popper-class="tooltip-top"
-                                effect="light" content="拖拽可调整信息在买家手机端显示的顺序，保存生效"
-                                placement="right">
-                            <span><i class="el-icon-question"></i></span>
-                        </el-tooltip>
-                    </div>
-                    <div class="item-right-button">
-                        <el-button @click="addData(tableGroup.id)" class="item-button" size="small">新增信息</el-button>
-                        <el-button v-if="tableGroup.id !== '1'" @click="editGroup(tableGroup.id)" class="item-button"
-                                   size="small">编辑
-                        </el-button>
-                        <el-button v-if="tableGroup.id !== '1'" @click="delGroup(tableGroup.id)" class="item-button"
-                                   size="small">删除
-                        </el-button>
+    <div>
+        <div class="content">
+            <basic-container class="member-container">
+                <header>
+                    <span @click="customActive" :class="['title',avtive ? '':'select-active']">客户资料</span>
+                    <span @click="storesActive" :class="['title',avtive ? 'select-active':'']">归属门店</span>
+                </header>
+                <div :class="[show ? 'table-show':'table-hide']">
+                    <!--表格-->
+                    <section class="member-table" v-for="(tableGroup,index) in tableData" :key="index">
+                        <div class="table-title">
+                            <div class="item-title">
+                                <span>{{ tableGroup.groupName }}</span>
+                                <el-tooltip
+                                        popper-class="tooltip-top"
+                                        effect="light" content="拖拽可调整信息在买家手机端显示的顺序，保存生效"
+                                        placement="right">
+                                    <span><i class="el-icon-question"></i></span>
+                                </el-tooltip>
+                            </div>
+                            <div class="item-right-button">
+                                <el-button @click="addData(tableGroup.id)" class="item-button" size="small">新增信息
+                                </el-button>
+                                <el-button v-if="tableGroup.id !== '1'" @click="editGroup(tableGroup.id)"
+                                           class="item-button"
+                                           size="small">编辑
+                                </el-button>
+                                <el-button v-if="tableGroup.id !== '1'" @click="delGroup(tableGroup.id)"
+                                           class="item-button"
+                                           size="small">删除
+                                </el-button>
 
-                        <el-button @click="openTable(tableGroup.id)" type="text" class="item-button" size="small"><i
-                                :class="[tableGroup.tableStatus ? 'el-icon-full-screen':'el-icon-aim']"></i>{{
-                            tableGroup.tableStatus ?
-                            '折叠':'展开' }}
-                        </el-button>
-                    </div>
+                                <el-button @click="openTable(tableGroup.id)" type="text" class="item-button"
+                                           size="small"><i
+                                        style="font-size: 13px !important;"
+                                        :class="[tableGroup.tableStatus ? 'icon-tuichuquanping':'icon-quanping']"></i>{{
+                                    tableGroup.tableStatus ?
+                                    '折叠':'展开' }}
+                                </el-button>
+                            </div>
+                        </div>
+                        <template>
+                            <el-table
+                                    :class="[tableGroup.tableStatus? 'table-show':'table-hide']"
+                                    row-key="id"
+                                    ref="moveTable"
+                                    :data="tableGroup.groupDate"
+                                    style="width: 100%">
+                                <el-table-column
+                                        prop="message"
+                                        label="信息"
+                                        width="160">
+                                </el-table-column>
+                                <el-table-column
+                                        prop="isUse"
+                                        label="使用"
+                                        width="120">
+                                    <template slot-scope="scope">
+                                        <el-checkbox
+                                                :disabled=scope.row.isDisable
+                                                v-model="scope.row.isUse"></el-checkbox>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column
+                                        prop="isMust"
+                                        label="必填"
+                                        width="120">
+                                    <template slot-scope="scope">
+                                        <el-checkbox
+                                                :disabled=scope.row.isDisable
+                                                v-model="scope.row.isMust"></el-checkbox>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column
+                                        prop="isEdit"
+                                        width="120"
+                                        label="可修改">
+                                    <template slot-scope="scope">
+                                        <el-checkbox
+                                                :disabled=scope.row.isDisable
+                                                v-model="scope.row.isEdit"></el-checkbox>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column
+                                        prop="type"
+                                        label="信息格式">
+                                    <template slot-scope="scope">
+                                        {{scope.row.type|messageType}}
+                                        <div class="formatType-select" v-if="scope.row.formatType.select">
+                                            <el-select size="mini"
+                                                       v-model=scope.row.formatType.value>
+                                                <el-option
+                                                        v-for="item in scope.row.formatType.dict"
+                                                        :key="item.value"
+                                                        :label="item.label"
+                                                        :value="item.value">
+                                                </el-option>
+                                            </el-select>
+                                        </div>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column
+                                        width="220"
+                                        label="操作">
+                                    <template slot-scope="scope">
+                                        <div v-if="scope.row.showOperate">
+                                            <el-button @click="editEvent(scope.row)" size="small" type="text">编辑
+                                            </el-button>
+                                            <el-button @click="deleteEvent(scope.row)" style="padding-left: 18px"
+                                                       size="small"
+                                                       type="text">删除
+                                            </el-button>
+                                        </div>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                        </template>
+
+                    </section>
+                    <!--底部新增-->
+                    <section class="bottom-add">
+                        <h4 @click="addGroup">新增自定义分组</h4>
+                    </section>
                 </div>
-                <template v-if="tableGroup.tableStatus">
-                    <el-table
-                            :data="tableGroup.groupDate"
-                            style="width: 100%">
-                        <el-table-column
-                                prop="message"
-                                label="信息"
-                                width="160">
-                        </el-table-column>
-                        <el-table-column
-                                prop="isUse"
-                                label="使用"
-                                width="120">
-                            <template slot-scope="scope">
-                                <el-checkbox
-                                        :disabled=scope.row.isDisable
-                                        v-model="scope.row.isUse"></el-checkbox>
-                            </template>
-                        </el-table-column>
-                        <el-table-column
-                                prop="isMust"
-                                label="必填"
-                                width="120">
-                            <template slot-scope="scope">
-                                <el-checkbox
-                                        :disabled=scope.row.isDisable
-                                        v-model="scope.row.isMust"></el-checkbox>
-                            </template>
-                        </el-table-column>
-                        <el-table-column
-                                prop="isEdit"
-                                width="120"
-                                label="可修改">
-                            <template slot-scope="scope">
-                                <el-checkbox
-                                        :disabled=scope.row.isDisable
-                                        v-model="scope.row.isEdit"></el-checkbox>
-                            </template>
-                        </el-table-column>
-                        <el-table-column
-                                prop="type"
-                                label="信息格式">
-                            <template slot-scope="scope">
-                                {{scope.row.type|messageType}}
-                                <div class="formatType-select" v-if="scope.row.formatType.select">
-                                    <el-select size="mini"
-                                               v-model=scope.row.formatType.value>
-                                        <el-option
-                                                v-for="item in scope.row.formatType.dict"
-                                                :key="item.value"
-                                                :label="item.label"
-                                                :value="item.value">
-                                        </el-option>
-                                    </el-select>
-                                </div>
-                            </template>
-                        </el-table-column>
-                        <el-table-column
-                                width="220"
-                                label="操作">
-                            <template slot-scope="scope">
-                                <div v-if="scope.row.showOperate">
-                                    <el-button @click="editEvent(scope.row)" size="small" type="text">编辑</el-button>
-                                    <el-button @click="deleteEvent(scope.row)" style="padding-left: 18px" size="small"
-                                               type="text">删除
-                                    </el-button>
-                                </div>
-                            </template>
-                        </el-table-column>
-                    </el-table>
-                </template>
-
-            </section>
-            <!--底部新增-->
-            <section class="bottom-add">
-                <h4 @click="addGroup">新增自定义分组</h4>
-            </section>
-        </basic-container>
-        <!--底部保存filex-->
-        <div class=" member-bottom-card">
-            <el-button class="member-bottom-button" @click="submitAll" size="mini" type="primary">保存</el-button>
-        </div>
-        <!--新增dialog-->
-        <el-dialog
-                @close="closedDialog"
-                custom-class="addData-dialog"
-                :modal-append-to-body="false"
-                :title="title"
-                :visible.sync="dialogVisible"
-                width="400px">
-            <el-form ref="form" :rules="rules" label-position="right" label-width="80px" :model="form">
-                <el-form-item :inline-message="true" label="信息名称" prop="message">
-                    <el-input maxlength="6"
-                              show-word-limit
-                              placeholder="请填写信息名称"
-                              size="mini"
-                              v-model="form.message">
-                    </el-input>
-                </el-form-item>
-                <el-form-item label="信息格式" prop="type">
-                    <el-select size="mini" style="width: 280px" v-model="form.type" placeholder="请选择活动区域">
-                        <el-option label="文本" value="1"></el-option>
-                        <el-option label="日期" value="2"></el-option>
-                        <el-option label="预设选项" value="3"></el-option>
-                    </el-select>
-                </el-form-item>
-                <!-- 选择预设才可以选择-->
-                <el-row v-if="form.type === '3'">
-                    <el-form-item prop="selectText" label="选项内容">
-                        <el-col :span="18">
-                            <el-input
-                                    maxlength="10"
-                                    show-word-limit
-                                    size="mini"
-                                    v-model="selectText"></el-input>
-                        </el-col>
-                        <el-col :push="1" :span="4">
-                            <el-button @click="addSelectText" size="mini">添加</el-button>
-                        </el-col>
+                <Shop :class="[show ? 'table-hide':'table-show']" ></Shop>
+            </basic-container>
+            <!--底部保存filex-->
+            <div v-if="false" class=" member-bottom-card">
+                <el-button class="member-bottom-button" @click="submitAll" size="mini" type="primary">保存</el-button>
+            </div>
+            <!--新增dialog-->
+            <el-dialog
+                    @close="closedDialog"
+                    custom-class="addData-dialog"
+                    :modal-append-to-body="false"
+                    :title="title"
+                    :visible.sync="dialogVisible"
+                    width="400px">
+                <el-form ref="form" :rules="rules" label-position="right" label-width="80px" :model="form">
+                    <el-form-item :inline-message="true" label="信息名称" prop="message">
+                        <el-input maxlength="6"
+                                  show-word-limit
+                                  placeholder="请填写信息名称"
+                                  size="mini"
+                                  v-model="form.message">
+                        </el-input>
                     </el-form-item>
-                </el-row>
-                <!--tags-->
-                <el-row v-if="form.type === '3'">
-                    <el-col :push="5" :span="19">
-                        <el-tag class="item-tag"
-                                type="info"
-                                v-for="tag in tags"
-                                :key="tag.id"
-                                @close="removeTag(tag.id)"
-                                closable>
-                            {{ tag.name }}
-                        </el-tag>
-                    </el-col>
-                </el-row>
-                <el-form-item label="提示文案" prop="copy">
-                    <el-input
-                            maxlength="15"
-                            show-word-limit
-                            placeholder="请填写提示文案"
-                            size="mini"
-                            v-model="form.copy">
-                    </el-input>
-                </el-form-item>
+                    <el-form-item label="信息格式" prop="type">
+                        <el-select size="mini" style="width: 280px" v-model="form.type" placeholder="请选择活动区域">
+                            <el-option label="文本" value="1"></el-option>
+                            <el-option label="日期" value="2"></el-option>
+                            <el-option label="预设选项" value="3"></el-option>
+                        </el-select>
+                    </el-form-item>
+                    <!-- 选择预设才可以选择-->
+                    <el-row v-if="form.type === '3'">
+                        <el-form-item prop="selectText" label="选项内容">
+                            <el-col :span="18">
+                                <el-input
+                                        maxlength="10"
+                                        show-word-limit
+                                        size="mini"
+                                        v-model="selectText"></el-input>
+                            </el-col>
+                            <el-col :push="1" :span="4">
+                                <el-button @click="addSelectText" size="mini">添加</el-button>
+                            </el-col>
+                        </el-form-item>
+                    </el-row>
+                    <!--tags-->
+                    <el-row v-if="form.type === '3'">
+                        <el-col :push="5" :span="19">
+                            <el-tag class="item-tag"
+                                    type="info"
+                                    v-for="tag in tags"
+                                    :key="tag.id"
+                                    @close="removeTag(tag.id)"
+                                    closable>
+                                {{ tag.name }}
+                            </el-tag>
+                        </el-col>
+                    </el-row>
+                    <el-form-item label="提示文案" prop="copy">
+                        <el-input
+                                maxlength="15"
+                                show-word-limit
+                                placeholder="请填写提示文案"
+                                size="mini"
+                                v-model="form.copy">
+                        </el-input>
+                    </el-form-item>
 
-            </el-form>
-            <div slot="footer" class="dialog-footer">
-                <el-button size="mini" type="primary" @click="submitForm">保存</el-button>
-                <el-button class="dialog-button" type="text" size="mini" @click="cancel">取消</el-button>
-            </div>
-        </el-dialog>
-        <!--组的dialog-->
-        <el-dialog
-                @close="closedDialogGroup"
-                custom-class="addData-dialog"
-                :modal-append-to-body="false"
-                :title="groupTitle"
-                :visible.sync="dialogVisibleGroup"
-                width="400px">
-            <el-form ref="groupForm" :rules="rulesGroup" label-position="right" label-width="80px" :model="groupForm">
-                <el-form-item :inline-message="true" label="分组名称" prop="groupName">
-                    <el-input maxlength="10"
-                              show-word-limit
-                              placeholder="请填写自定义分组名称"
-                              size="mini"
-                              v-model="groupForm.groupName">
-                    </el-input>
-                </el-form-item>
-            </el-form>
-            <div slot="footer" class="dialog-footer">
-                <el-button size="mini" type="primary" @click="submitGroup">保存</el-button>
-                <el-button class="dialog-button" type="text" size="mini" @click="cancelGroup">取消</el-button>
-            </div>
-        </el-dialog>
+                </el-form>
+                <div slot="footer" class="dialog-footer">
+                    <el-button size="mini" type="primary" @click="submitForm">保存</el-button>
+                    <el-button class="dialog-button" type="text" size="mini" @click="cancel">取消</el-button>
+                </div>
+            </el-dialog>
+            <!--组的dialog-->
+            <el-dialog
+                    @close="closedDialogGroup"
+                    custom-class="addData-dialog"
+                    :modal-append-to-body="false"
+                    :title="groupTitle"
+                    :visible.sync="dialogVisibleGroup"
+                    width="400px">
+                <el-form ref="groupForm" :rules="rulesGroup" label-position="right" label-width="80px"
+                         :model="groupForm">
+                    <el-form-item :inline-message="true" label="分组名称" prop="groupName">
+                        <el-input maxlength="10"
+                                  show-word-limit
+                                  placeholder="请填写自定义分组名称"
+                                  size="mini"
+                                  v-model="groupForm.groupName">
+                        </el-input>
+                    </el-form-item>
+                </el-form>
+                <div slot="footer" class="dialog-footer">
+                    <el-button size="mini" type="primary" @click="submitGroup">保存</el-button>
+                    <el-button class="dialog-button" type="text" size="mini" @click="cancelGroup">取消</el-button>
+                </div>
+            </el-dialog>
+        </div>
+
     </div>
+
 </template>
 
 <script>
+    import Sortable from 'sortablejs'
+    import Shop from "./shop";
+
     export default {
         name: 'index',
+        components: {Shop},
         data() {
             return {
                 avtive: false,
                 checked: false,
                 dialogVisible: false,
                 dialogVisibleGroup: false,
+                show: true,
                 // 预设信息
                 selectText: '',
                 title: '',
                 groupTitle: '',
                 tags: [],
+                num: 0,
                 form: {
                     type: '1'
                 },
                 groupForm: {},
+                newList: [],
                 tableData:
                     [
                         {
@@ -483,11 +508,16 @@
                 }
             };
         },
+        mounted() {
+            this.setSort()
+        },
         methods: {
             customActive() {
-                this.avtive = !this.avtive
+                this.avtive = !this.avtive;
+                this.show = !this.show;
             },
             storesActive() {
+                this.show = !this.show;
                 this.avtive = !this.avtive
             },
             addData(id) {
@@ -659,10 +689,15 @@
                                 this.tableData.push(obj);
                                 this.dialogVisibleGroup = false;
                                 this.groupForm.groupName = '';
-                                this.$message.success('新增成功')
+                                this.$message.success('新增成功');
                             }
                         }
                     }
+                });
+                this.$nextTick(() => {
+                    const num = this.tableData.length - 1;
+                    this.createSortable(num)
+                    // console.log(this.$refs.moveTable[1]);
                 })
             },
             cancelGroup() {
@@ -694,7 +729,7 @@
                 });
             },
             submitAll() {
-                const data = JSON.stringify(this.tableData)
+                const data = JSON.stringify(this.tableData);
                 this.$message({
                     showClose: 'true',
                     message: `提交成功，${data}`,
@@ -727,6 +762,41 @@
                     showOperate: true,
                     formatType: formatType
                 };
+            },
+            // 表格拖动
+            setSort() {
+                // console.log(this.$refs.moveTable[0].$el)
+                const el = this.$refs.moveTable[0].$el.querySelectorAll('.el-table__body-wrapper > table > tbody')[0];
+                this.sortable = Sortable.create(el, {
+                    animation: 150,
+                    // ghostClass: 'blue-background-class',
+                    // ghostClass: 'sortable-ghost', // Class name for the drop placeholder,
+                    setData: function (dataTransfer) {
+                        // to avoid Firefox bug
+                        // Detail see : https://github.com/RubaXa/Sortable/issues/1012
+                        dataTransfer.setData('Text', '')
+                    },
+                    // onEnd: evt => {
+                    //     const targetRow = this.list.splice(evt.oldIndex, 1)[0]
+                    //     this.list.splice(evt.newIndex, 0, targetRow)
+                    //     // for show the changes, you can delete in you code
+                    //     const tempIndex = this.newList.splice(evt.oldIndex, 1)[0]
+                    //     this.newList.splice(evt.newIndex, 0, tempIndex)
+                    // }
+                })
+            },
+            createSortable(num) {
+                const ele = this.$refs.moveTable[num].$el.querySelectorAll('.el-table__body-wrapper > table > tbody')[0];
+                this.sortable = Sortable.create(ele, {
+                    animation: 150,
+                    // ghostClass: 'blue-background-class',
+                    // ghostClass: 'sortable-ghost', // Class name for the drop placeholder,
+                    setData: function (dataTransfer) {
+                        // to avoid Firefox bug
+                        // Detail see : https://github.com/RubaXa/Sortable/issues/1012
+                        dataTransfer.setData('Text', '')
+                    },
+                })
             }
         },
         filters: {
@@ -739,7 +809,7 @@
                     return '预设选项'
                 }
             }
-        }
+        },
     }
 </script>
 
@@ -809,6 +879,7 @@
         .el-tooltip__popper.is-light .popper__arrow {
             border-right-color: #fff !important;
         }
+
     }
 
     /*table自定义*/
@@ -832,10 +903,22 @@
             }
         }
 
+        .el-table__row {
+            cursor: move;
+        }
+
         .el-table--enable-row-hover .el-table__body tr:hover > td {
             background-color: rgba(0, 0, 0, 0) !important;
         }
 
+    }
+
+    .el-tooltip__popper.is-light .popper__arrow {
+        border-right-color: #e3e4e5 !important;
+    }
+
+    .el-tooltip__popper .popper__arrow {
+        border-right-color: #e3e4e5 !important;
     }
 
     /*select自定义*/
@@ -843,7 +926,15 @@
         position: absolute;
         top: 10px;
         left: 65px;
+    }
 
+    /*折叠样式*/
+    .table-show {
+        display: block !important;
+    }
+
+    .table-hide {
+        display: none !important;
     }
 </style>
 
@@ -929,6 +1020,7 @@
                     }
                 }
             }
+
         }
 
         .bottom-add {
