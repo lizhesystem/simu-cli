@@ -126,7 +126,7 @@
                 <Shop :class="[show ? 'table-hide':'table-show']" ></Shop>
             </basic-container>
             <!--底部保存filex-->
-            <div v-if="false" class=" member-bottom-card">
+            <div v-if="show" class=" member-bottom-card">
                 <el-button class="member-bottom-button" @click="submitAll" size="mini" type="primary">保存</el-button>
             </div>
             <!--新增dialog-->
@@ -940,8 +940,9 @@
 
 <style scoped lang="scss">
     .content {
+       height:100%;
         .member-container {
-            margin-bottom: 20px;
+            margin-bottom: 80px;
 
         }
 
@@ -1043,9 +1044,9 @@
         border-radius: 10px 10px 0 0;
         height: 60px;
         background: #fff;
-        position: sticky;
+        position: absolute;
         /*在 viewport 视口滚动到元素 top 距离小于 30px 之前，元素为相对定位。之后，元素将固定在与顶部距离 30px 的位置，直到 viewport 视口回滚到阈值以下。*/
-        bottom: 30px;
+        bottom: 0;
         z-index: 100;
         width: 100%;
         display: flex;
