@@ -230,6 +230,7 @@
 <script>
     import Sortable from 'sortablejs'
     import Shop from "./shop";
+    import { mapGetters} from "vuex";
 
     export default {
         name: 'index',
@@ -252,7 +253,8 @@
                 },
                 groupForm: {},
                 newList: [],
-                tableData:
+                tableData: [],
+                sourceData:
                     [
                         {
                             id: '1',
@@ -508,8 +510,24 @@
                 }
             };
         },
+        computed: {
+            ...mapGetters([
+                'memberData',
+            ]),
+        },
         mounted() {
-            this.setSort()
+            // 从localStorage获取
+            // let data = localStorage.getItem('myData');
+            // if (data != null && data !== '') {
+            //     this.tableData = JSON.parse(data);
+            // } else {
+            //     this.tableData = this.sourceData;
+            // }
+            // 从vuex里获取
+            this.tableData = this.memberData.length > 0 ? this.tableData = JSON.parse(this.memberData) : this.tableData = this.sourceData;
+            this.$nextTick(() => {
+                this.createSortable()
+            })
         },
         methods: {
             customActive() {
@@ -579,7 +597,6 @@
                                         table.groupDate.splice(j, 1, obj);
                                         this.cancel();
                                         this.$message.success('修改成功')
-                                        console.log(table.groupDate)
                                     }
                                 }
                             }
@@ -593,7 +610,7 @@
                             const gid = Date.now().toString(); // 生成gid
                             const obj = this.handleFormatType(message, copy, gid);
                             for (let item of this.tableData) {
-                                if(item.id === this.form.key){
+                                if (item.id === this.form.key) {
                                     if (item.groupDate.filter(i => i.messages == name).length > 0) {
                                         return this.$message.error('信息名称不能重复')
                                     } else {
@@ -603,19 +620,6 @@
                                     }
                                 }
                             }
-
-                            // for (let i = 0; i < this.tableData.length; i++) {
-                            //     const table = this.tableData[i];
-                            //     if (this.form.key === table.id) {
-                            //         if (table.groupDate.filter(i => i.messages == name).length > 0) {
-                            //             return this.$message.error('信息名称不能重复')
-                            //         } else {
-                            //             table.groupDate.push(obj);
-                            //             this.cancel();
-                            //             this.$message.success('新增成功')
-                            //         }
-                            //     }
-                            // }
                         }
                     }
                 })
@@ -675,13 +679,11 @@
                     if (valid) {
                         if (this.groupForm.fid) {
                             // 修改
-                            console.log('修改')
                             this.tableData.filter(i => i.id === this.groupForm.id)[0].groupName = this.groupForm.groupName.trim();
                             this.dialogVisibleGroup = false;
                             this.$message.success('修改成功')
                         } else {
                             // 新增
-                            console.log('新增')
                             const groupName = this.groupForm.groupName.trim();
                             const id = Date.now().toString();
                             const fid = Date.now().toString();
@@ -705,8 +707,8 @@
                     }
                 });
                 this.$nextTick(() => {
-                    const num = this.tableData.length - 1;
-                    this.createSortable(num)
+                    // const num = this.tableData.length - 1;
+                    this.createSortable()
                     // console.log(this.$refs.moveTable[1]);
                 })
             },
@@ -740,9 +742,11 @@
             },
             submitAll() {
                 const data = JSON.stringify(this.tableData);
+                // localStorage.setItem('myData', data);
+                this.$store.commit('SET_TABLEDATA', data);
                 this.$message({
                     showClose: 'true',
-                    message: `提交成功，${data}`,
+                    message: `提交成功`,
                     type: 'success'
                 });
             },
@@ -774,39 +778,54 @@
                 };
             },
             // 表格拖动
-            setSort() {
-                // console.log(this.$refs.moveTable[0].$el)
-                const el = this.$refs.moveTable[0].$el.querySelectorAll('.el-table__body-wrapper > table > tbody')[0];
-                this.sortable = Sortable.create(el, {
-                    animation: 150,
-                    // ghostClass: 'blue-background-class',
-                    // ghostClass: 'sortable-ghost', // Class name for the drop placeholder,
-                    setData: function (dataTransfer) {
-                        // to avoid Firefox bug
-                        // Detail see : https://github.com/RubaXa/Sortable/issues/1012
-                        dataTransfer.setData('Text', '')
-                    },
-                    // onEnd: evt => {
-                    //     const targetRow = this.list.splice(evt.oldIndex, 1)[0]
-                    //     this.list.splice(evt.newIndex, 0, targetRow)
-                    //     // for show the changes, you can delete in you code
-                    //     const tempIndex = this.newList.splice(evt.oldIndex, 1)[0]
-                    //     this.newList.splice(evt.newIndex, 0, tempIndex)
-                    // }
-                })
-            },
-            createSortable(num) {
-                const ele = this.$refs.moveTable[num].$el.querySelectorAll('.el-table__body-wrapper > table > tbody')[0];
-                this.sortable = Sortable.create(ele, {
-                    animation: 150,
-                    // ghostClass: 'blue-background-class',
-                    // ghostClass: 'sortable-ghost', // Class name for the drop placeholder,
-                    setData: function (dataTransfer) {
-                        // to avoid Firefox bug
-                        // Detail see : https://github.com/RubaXa/Sortable/issues/1012
-                        dataTransfer.setData('Text', '')
-                    },
-                })
+            // setSort() {
+            //     // console.log(this.$refs.moveTable[0].$el)
+            //     const el = this.$refs.moveTable[0].$el.querySelectorAll('.el-table__body-wrapper > table > tbody')[0];
+            //     this.sortable = Sortable.create(el, {
+            //         animation: 150,
+            //         // ghostClass: 'blue-background-class',
+            //         // ghostClass: 'sortable-ghost', // Class name for the drop placeholder,
+            //         setData: function (dataTransfer) {
+            //             // to avoid Firefox bug
+            //             // Detail see : https://github.com/RubaXa/Sortable/issues/1012
+            //             dataTransfer.setData('Text', '')
+            //         },
+            //         // onEnd: evt => {
+            //         //     const targetRow = this.list.splice(evt.oldIndex, 1)[0]
+            //         //     this.list.splice(evt.newIndex, 0, targetRow)
+            //         //     // for show the changes, you can delete in you code
+            //         //     const tempIndex = this.newList.splice(evt.oldIndex, 1)[0]
+            //         //     this.newList.splice(evt.newIndex, 0, tempIndex)
+            //         // }
+            //     })
+            // },
+            createSortable() {
+                if (this.tableData.length > 0) {
+                    for (let i = 0; i < this.tableData.length; i++) {
+                        const ele = this.$refs.moveTable[i].$el.querySelectorAll('.el-table__body-wrapper > table > tbody')[0];
+                        this.sortable = Sortable.create(ele, {
+                            animation: 150,
+                            // ghostClass: 'blue-background-class',
+                            // ghostClass: 'sortable-ghost', // Class name for the drop placeholder,
+                            setData: function (dataTransfer) {
+                                // to avoid Firefox bug
+                                // Detail see : https://github.com/RubaXa/Sortable/issues/1012
+                                dataTransfer.setData('Text', '')
+                            },
+                        })
+                    }
+                }
+                // const ele = this.$refs.moveTable[num].$el.querySelectorAll('.el-table__body-wrapper > table > tbody')[0];
+                // this.sortable = Sortable.create(ele, {
+                //     animation: 150,
+                //     // ghostClass: 'blue-background-class',
+                //     // ghostClass: 'sortable-ghost', // Class name for the drop placeholder,
+                //     setData: function (dataTransfer) {
+                //         // to avoid Firefox bug
+                //         // Detail see : https://github.com/RubaXa/Sortable/issues/1012
+                //         dataTransfer.setData('Text', '')
+                //     },
+                // })
             }
         },
         filters: {
@@ -1056,7 +1075,6 @@
         height: 60px;
         background: #fff;
         position: absolute;
-        /*在 viewport 视口滚动到元素 top 距离小于 30px 之前，元素为相对定位。之后，元素将固定在与顶部距离 30px 的位置，直到 viewport 视口回滚到阈值以下。*/
         bottom: 0;
         z-index: 100;
         width: 100%;

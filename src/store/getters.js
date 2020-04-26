@@ -4,6 +4,7 @@ const getters = {
   language: state => state.common.language,
   website: state => state.common.website,
   userInfo: state => state.user.userInfo,
+  memberData:state => state.user.memberData,
   colorName: state => state.common.colorName,
   themeName: state => state.common.themeName,
   isShade: state => state.common.isShade,
