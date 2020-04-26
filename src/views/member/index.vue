@@ -46,6 +46,7 @@
                                     row-key="id"
                                     ref="moveTable"
                                     :data="tableGroup.groupDate"
+                                    :default-sort="{prop:tableGroup.gid,order: 'ascending'}"
                                     style="width: 100%">
                                 <el-table-column
                                         prop="message"
@@ -230,7 +231,7 @@
 <script>
     import Sortable from 'sortablejs'
     import Shop from "./shop";
-    import { mapGetters} from "vuex";
+    import { mapGetters } from "vuex";
 
     export default {
         name: 'index',
@@ -800,20 +801,29 @@
             //     })
             // },
             createSortable() {
+                const _this = this;
                 if (this.tableData.length > 0) {
                     for (let i = 0; i < this.tableData.length; i++) {
-                        const ele = this.$refs.moveTable[i].$el.querySelectorAll('.el-table__body-wrapper > table > tbody')[0];
+                        const ele = _this.$refs.moveTable[i].$el.querySelectorAll('.el-table__body-wrapper > table > tbody')[0];
                         this.sortable = Sortable.create(ele, {
                             animation: 150,
                             setData: function (dataTransfer) {
                                 dataTransfer.setData('Text', '')
                             },
                             onEnd: evt => {
-                                const targetRow = this.list.splice(evt.oldIndex, 1)[0];
-                                this.list.splice(evt.newIndex, 0, targetRow);
-                                // for show the changes, you can delete in you code
-                                const tempIndex = this.newList.splice(evt.oldIndex, 1)[0]
-                                this.newList.splice(evt.newIndex, 0, tempIndex)
+                                // const list = _this.tableData[i].groupDate;
+                                // // console.log(list)
+                                // const targetRow = list.splice(evt.oldIndex, 1)[0];
+                                // console.log(targetRow);
+                                // list.splice(evt.newIndex, 0, targetRow);
+                                // // _this.tableData[i].groupDate = list;
+                                // console.log(list)
+                                // _this.$set(_this.tableData[i].groupDate, list)
+                                // _this.$refs.moveTable[i].doLayout()
+                                // console.log(this.tableData[i].groupDate)
+                                // // for show the changes, you can delete in you code
+                                // const tempIndex = this.newList.splice(evt.oldIndex, 1)[0]
+                                // this.newList.splice(evt.newIndex, 0, tempIndex)
                             }
                         })
                     }
