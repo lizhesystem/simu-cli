@@ -123,7 +123,7 @@
                         <h4 @click="addGroup">新增自定义分组</h4>
                     </section>
                 </div>
-                <Shop :class="[show ? 'table-hide':'table-show']" ></Shop>
+                <Shop :class="[show ? 'table-hide':'table-show']"></Shop>
             </basic-container>
             <!--底部保存filex-->
             <div v-if="show" class=" member-bottom-card">
@@ -564,7 +564,6 @@
                     if (valid) {
                         if (this.form.gid) {
                             // 修改
-                            console.log('ggggggggggggg')
                             if (this.form.type === '3' && this.tags.length === 0) {
                                 return this.$message.warning('请选择预设选项')
                             }
@@ -586,7 +585,6 @@
                             }
                         } else {
                             // 新增
-                            console.log('xxxxxxxxxxx')
                             if (this.form.type === '3' && this.tags.length === 0) {
                                 return this.$message.warning('请选择预设选项')
                             }
@@ -594,18 +592,30 @@
                             const copy = this.form.copy.trim();
                             const gid = Date.now().toString(); // 生成gid
                             const obj = this.handleFormatType(message, copy, gid);
-                            for (let i = 0; i < this.tableData.length; i++) {
-                                const table = this.tableData[i];
-                                if (this.form.key === table.id) {
-                                    if (table.groupDate.filter(i => i.messages == name).length > 0) {
+                            for (let item of this.tableData) {
+                                if(item.id === this.form.key){
+                                    if (item.groupDate.filter(i => i.messages == name).length > 0) {
                                         return this.$message.error('信息名称不能重复')
                                     } else {
-                                        table.groupDate.push(obj);
+                                        item.groupDate.push(obj);
                                         this.cancel();
                                         this.$message.success('新增成功')
                                     }
                                 }
                             }
+
+                            // for (let i = 0; i < this.tableData.length; i++) {
+                            //     const table = this.tableData[i];
+                            //     if (this.form.key === table.id) {
+                            //         if (table.groupDate.filter(i => i.messages == name).length > 0) {
+                            //             return this.$message.error('信息名称不能重复')
+                            //         } else {
+                            //             table.groupDate.push(obj);
+                            //             this.cancel();
+                            //             this.$message.success('新增成功')
+                            //         }
+                            //     }
+                            // }
                         }
                     }
                 })
@@ -940,7 +950,8 @@
 
 <style scoped lang="scss">
     .content {
-       height:100%;
+        height: 100%;
+
         .member-container {
             margin-bottom: 80px;
 
