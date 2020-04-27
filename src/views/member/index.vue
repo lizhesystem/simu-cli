@@ -41,12 +41,12 @@
                             </div>
                         </div>
                         <template>
+                            <!--                            :default-sort="{prop:'gid',order:'descending'}"-->
                             <el-table
                                     :class="[tableGroup.tableStatus? 'table-show':'table-hide']"
-                                    row-key="id"
+                                    row-key="gid"
                                     ref="moveTable"
                                     :data="tableGroup.groupDate"
-                                    :default-sort="{prop:tableGroup.gid,order: 'ascending'}"
                                     style="width: 100%">
                                 <el-table-column
                                         prop="message"
@@ -231,7 +231,7 @@
 <script>
     import Sortable from 'sortablejs'
     import Shop from "./shop";
-    import { mapGetters } from "vuex";
+    import {mapGetters} from "vuex";
 
     export default {
         name: 'index',
@@ -248,12 +248,10 @@
                 title: '',
                 groupTitle: '',
                 tags: [],
-                num: 0,
                 form: {
                     type: '1'
                 },
                 groupForm: {},
-                newList: [],
                 tableData: [],
                 sourceData:
                     [
@@ -517,13 +515,6 @@
             ]),
         },
         mounted() {
-            // 从localStorage获取
-            // let data = localStorage.getItem('myData');
-            // if (data != null && data !== '') {
-            //     this.tableData = JSON.parse(data);
-            // } else {
-            //     this.tableData = this.sourceData;
-            // }
             // 从vuex里获取
             this.tableData = this.memberData.length > 0 ? this.tableData = JSON.parse(this.memberData) : this.tableData = this.sourceData;
             this.$nextTick(() => {
@@ -693,7 +684,7 @@
                                 fid: fid,
                                 groupName: groupName,
                                 tableStatus: true,
-                                groupDate: []
+                                groupDate: [],
                             };
                             // 名称是否重复
                             if (this.tableData.filter(i => i.groupName == groupName).length > 0) {
@@ -708,7 +699,6 @@
                     }
                 });
                 this.$nextTick(() => {
-                    // const num = this.tableData.length - 1;
                     this.createSortable()
                     // console.log(this.$refs.moveTable[1]);
                 })
@@ -743,7 +733,6 @@
             },
             submitAll() {
                 const data = JSON.stringify(this.tableData);
-                // localStorage.setItem('myData', data);
                 this.$store.commit('SET_TABLEDATA', data);
                 this.$message({
                     showClose: 'true',
@@ -753,7 +742,6 @@
             },
             // form处理
             handleFormatType(message, copy, gid) {
-
                 let formatType = {};
                 let dict = [];
                 let type = this.form.type;
@@ -778,52 +766,21 @@
                     formatType: formatType
                 };
             },
-            // 表格拖动
-            // setSort() {
-            //     // console.log(this.$refs.moveTable[0].$el)
-            //     const el = this.$refs.moveTable[0].$el.querySelectorAll('.el-table__body-wrapper > table > tbody')[0];
-            //     this.sortable = Sortable.create(el, {
-            //         animation: 150,
-            //         // ghostClass: 'blue-background-class',
-            //         // ghostClass: 'sortable-ghost', // Class name for the drop placeholder,
-            //         setData: function (dataTransfer) {
-            //             // to avoid Firefox bug
-            //             // Detail see : https://github.com/RubaXa/Sortable/issues/1012
-            //             dataTransfer.setData('Text', '')
-            //         },
-            //         // onEnd: evt => {
-            //         //     const targetRow = this.list.splice(evt.oldIndex, 1)[0]
-            //         //     this.list.splice(evt.newIndex, 0, targetRow)
-            //         //     // for show the changes, you can delete in you code
-            //         //     const tempIndex = this.newList.splice(evt.oldIndex, 1)[0]
-            //         //     this.newList.splice(evt.newIndex, 0, tempIndex)
-            //         // }
-            //     })
-            // },
             createSortable() {
                 const _this = this;
                 if (this.tableData.length > 0) {
                     for (let i = 0; i < this.tableData.length; i++) {
-                        const ele = _this.$refs.moveTable[i].$el.querySelectorAll('.el-table__body-wrapper > table > tbody')[0];
+                        const ele = this.$refs.moveTable[i].$el.querySelectorAll('.el-table__body-wrapper > table > tbody')[0];
                         this.sortable = Sortable.create(ele, {
                             animation: 150,
                             setData: function (dataTransfer) {
                                 dataTransfer.setData('Text', '')
                             },
                             onEnd: evt => {
-                                // const list = _this.tableData[i].groupDate;
-                                // // console.log(list)
-                                // const targetRow = list.splice(evt.oldIndex, 1)[0];
-                                // console.log(targetRow);
-                                // list.splice(evt.newIndex, 0, targetRow);
-                                // // _this.tableData[i].groupDate = list;
-                                // console.log(list)
-                                // _this.$set(_this.tableData[i].groupDate, list)
-                                // _this.$refs.moveTable[i].doLayout()
-                                // console.log(this.tableData[i].groupDate)
-                                // // for show the changes, you can delete in you code
-                                // const tempIndex = this.newList.splice(evt.oldIndex, 1)[0]
-                                // this.newList.splice(evt.newIndex, 0, tempIndex)
+                                const tempIndex = _this.tableData[i].groupDate.splice(evt.oldIndex, 1)[0];
+                                _this.tableData[i].groupDate.splice(evt.newIndex, 0, tempIndex);
+                                // const tempIndex = this.tableData[i].seq.splice(evt.oldIndex, 1)[0];
+                                // this.tableData[i].seq.splice(evt.newIndex, 0, tempIndex);
                             }
                         })
                     }
