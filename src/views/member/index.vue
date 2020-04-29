@@ -41,7 +41,6 @@
                             </div>
                         </div>
                         <template>
-                            <!--                            :default-sort="{prop:'gid',order:'descending'}"-->
                             <el-table
                                     :class="[tableGroup.tableStatus? 'table-show':'table-hide']"
                                     row-key="gid"
@@ -535,28 +534,19 @@
                     type: '1'
                 };
                 this.title = '新增信息';
-                for (let i = 0; i < this.tableData.length; i++) {
-                    if (this.tableData[i].id === id) {
-                        // id赋值给key,区分表单
-                        this.form.key = this.tableData[i].id;
-                    }
-                }
+                this.form.key = this.tableData.find(i => i.id === id).id;
                 this.dialogVisible = true;
             },
-            // 折叠关闭事件
+            // 折叠
             openTable(id) {
-                for (let i = 0; i < this.tableData.length; i++) {
-                    if (this.tableData[i].id === id) {
-                        this.tableData[i].tableStatus = !this.tableData[i].tableStatus
-                    }
-                }
+                const table = this.tableData.find(i => i.id === id);
+                table.tableStatus = !table.tableStatus
             },
             // 添加预设信息
             addSelectText() {
                 let num = Date.now().toString();
                 if (this.selectText.trim() === '') return this.$message.warning('请输入预设信息');
-                const selectText = this.selectText.trim();
-                let obj = {id: num, name: selectText};
+                let obj = {id: num, name: this.selectText.trim()};
                 this.tags.push(obj)
             },
             // 删除预设信息
@@ -779,8 +769,6 @@
                             onEnd: evt => {
                                 const tempIndex = _this.tableData[i].groupDate.splice(evt.oldIndex, 1)[0];
                                 _this.tableData[i].groupDate.splice(evt.newIndex, 0, tempIndex);
-                                // const tempIndex = this.tableData[i].seq.splice(evt.oldIndex, 1)[0];
-                                // this.tableData[i].seq.splice(evt.newIndex, 0, tempIndex);
                             }
                         })
                     }
