@@ -544,9 +544,9 @@
             },
             // 添加预设信息
             addSelectText() {
-                let num = Date.now().toString();
+                const num = Date.now().toString();
                 if (this.selectText.trim() === '') return this.$message.warning('请输入预设信息');
-                let obj = {id: num, name: this.selectText.trim()};
+                const obj = {id: num, name: this.selectText.trim()};
                 this.tags.push(obj)
             },
             // 删除预设信息
@@ -732,9 +732,9 @@
             },
             // form处理
             handleFormatType(message, copy, gid) {
-                let formatType = {};
-                let dict = [];
-                let type = this.form.type;
+                const formatType = {};
+                const dict = [];
+                const type = this.form.type;
                 if (type === '3' && this.tags.length > 0) {
                     this.tags.forEach(i => {
                         dict.push({value: i.id, label: i.name})
