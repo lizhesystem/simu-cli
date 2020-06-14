@@ -593,7 +593,9 @@
                             const obj = this.handleFormatType(message, copy, gid);
                             for (let item of this.tableData) {
                                 if (item.id === this.form.key) {
-                                    if (item.groupDate.filter(i => i.messages == name).length > 0) {
+                                    console.log(item.groupDate)
+                                    console.log(item.groupDate.filter(i => i.message == message))
+                                    if (item.groupDate.filter(i => i.message == message).length > 0) {
                                         return this.$message.error('信息名称不能重复')
                                     } else {
                                         item.groupDate.push(obj);
