@@ -66,9 +66,9 @@ router.beforeEach((to, from, next) => {
 
 router.afterEach(() => {
   NProgress.done();
-  let title = store.getters.tag.label;
-  let i18n = store.getters.tag.meta.i18n;
-  title = router.$avueRouter.generateTitle(title, i18n)
+  // let title = store.getters.tag.label;
+  // let i18n = store.getters.tag.meta.i18n;
+  // title = router.$avueRouter.generateTitle(title, i18n)
   //根据当前的标签也获取label的值动态设置浏览器标题
-  router.$avueRouter.setTitle(title);
+  // router.$avueRouter.setTitle(title);
 });
