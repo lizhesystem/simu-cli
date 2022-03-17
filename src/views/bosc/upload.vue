@@ -1,35 +1,42 @@
 <template>
-  <avue-form :option="option" v-model="form"> </avue-form>
+  <div class="app-container">
+    <upload-excel-component :on-success="handleSuccess" :before-upload="beforeUpload" />
+    <el-table :data="tableData" border highlight-current-row style="width: 100%;margin-top:20px;">
+      <el-table-column v-for="item of tableHeader" :key="item" :prop="item" :label="item" />
+    </el-table>
+  </div>
 </template>
 
 <script>
+import UploadExcelComponent from './utils/UploadExcel'
+
 export default {
-   data(){
-     return {
-       form:{},
-       option: {
-          labelWidth: 120,
-          column: [
-            {
-              label: '七牛上传',
-              prop: 'imgUrl',
-              type: 'upload',
-              listType: 'picture-img',
-              propsHttp: {
-                name: 'hash',
-                url: "key"
-              },
-              oss: 'qiniu',
-              loadText: '附件上传中，请稍等',
-              span: 24,
-              tip: '只能上传jpg/png文件，且不超过500kb',
-            }
-          ]
-        }
-     }
-   }
+  name: 'UploadExcel',
+  components: { UploadExcelComponent },
+  data() {
+    return {
+      tableData: [],
+      tableHeader: []
+    }
+  },
+  methods: {
+    beforeUpload(file) {
+      const isLt1M = file.size / 1024 / 1024 < 1
+
+      if (isLt1M) {
+        return true
+      }
+
+      this.$message({
+        message: 'Please do not upload files larger than 1m in size.',
+        type: 'warning'
+      })
+      return false
+    },
+    handleSuccess({ results, header }) {
+      this.tableData = results
+      this.tableHeader = header
+    }
+  }
 }
 </script>
-
-<style>
-</style>
