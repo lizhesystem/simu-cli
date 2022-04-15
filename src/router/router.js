@@ -13,31 +13,35 @@ import ViewsRouter from './views/'
 import AvueRouter from './avue-router';
 import i18n from '@/lang' // Internationalization
 import Store from '../store/';
+
 Vue.use(VueRouter)
 //创建路由
 export const createRouter = () => new VueRouter({
-  scrollBehavior (to, from, savedPosition) {
-    if (savedPosition) {
-      return savedPosition
-    } else {
-      if (from.meta.keepAlive) {
-        from.meta.savedPosition = document.body.scrollTop
-      }
-      return {
-        x: 0,
-        y: to.meta.savedPosition || 0
-      }
-    }
-  },
-  routes: [...PageRouter, ...ViewsRouter]
+    mode: 'hash',
+    scrollBehavior(to, from, savedPosition) {
+        if (savedPosition) {
+            return savedPosition
+        } else {
+            if (from.meta.keepAlive) {
+                from.meta.savedPosition = document.body.scrollTop
+            }
+            return {
+                x: 0,
+                y: to.meta.savedPosition || 0
+            }
+        }
+    },
+    routes: [...PageRouter, ...ViewsRouter]
 })
 const Router = createRouter()
 AvueRouter.install(Vue, Router, Store, i18n);
 Router.$avueRouter.formatRoutes(Store.state.user.menuAll, true);
 Router.addRoutes([...PageRouter, ...ViewsRouter]);
-export function resetRouter () {
-  const newRouter = createRouter()
-  Router.matcher = newRouter.matcher // reset router
-  AvueRouter.install(Vue, Router, Store, i18n);
+
+export function resetRouter() {
+    const newRouter = createRouter()
+    Router.matcher = newRouter.matcher // reset router
+    AvueRouter.install(Vue, Router, Store, i18n);
 }
+
 export default Router

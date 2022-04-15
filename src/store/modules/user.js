@@ -1,9 +1,9 @@
-import {setToken, removeToken} from '@/util/auth'
-import {setStore, getStore} from '@/util/store'
+import {removeToken, setToken} from '@/util/auth'
+import {getStore, setStore} from '@/util/store'
 import {isURL, validatenull} from '@/util/validate'
-import {encryption, deepClone} from '@/util/util'
+import {deepClone, encryption} from '@/util/util'
 import webiste from '@/config/website'
-import {loginByUsername, getUserInfo, getMenu, getTopMenu, logout, refeshToken} from '@/api/user'
+import {getMenu, getTopMenu, getUserInfo, loginByUsername, logout, refeshToken} from '@/api/user'
 
 
 function addPath(ele, first) {
@@ -45,20 +45,40 @@ const user = {
     actions: {
         //根据用户名登录
         LoginByUsername({commit}, userInfo) {
-            const user = encryption({
-                data: userInfo,
-                type: 'Aes',
-                key: 'avue',
-                param: ['useranme', 'password']
-            });
+            // const user = encryption({
+            //     data: userInfo,
+            //     type: 'Aes',
+            //     key: 'avue',
+            //     param: ['useranme', 'password']
+            // });
             return new Promise((resolve) => {
-                loginByUsername(user.username, user.password, userInfo.code, userInfo.redomStr).then(res => {
-                    const data = res.data.data;
-                    commit('SET_TOKEN', data);
+
+               const  data1 =  {
+                    userInfo: {
+                        username: 'admin',
+                            name: 'avue',
+                            avatar: 'https://gitee.com/uploads/61/632261_smallweigit.jpg',
+                    },
+                    roles: 'admin',
+                        permission: [
+                        'sys_crud_btn_add',
+                        'sys_crud_btn_export',
+                        'sys_menu_btn_add',
+                        'sys_menu_btn_edit',
+                        'sys_menu_btn_del',
+                        'sys_role_btn1',
+                        'sys_role_btn2',
+                        'sys_role_btn3',
+                        'sys_role_btn4',
+                        'sys_role_btn5',
+                        'sys_role_btn6',
+                    ], //权限级别
+                }
+                commit('SET_TOKEN', data1);
                     commit('DEL_ALL_TAG');
                     commit('CLEAR_LOCK');
                     resolve();
-                })
+
             })
         },
         //根据手机号登录

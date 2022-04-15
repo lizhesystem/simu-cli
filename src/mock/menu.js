@@ -74,7 +74,7 @@ const first = [{
             path: 'bosc1/member',
             component: 'views/member/index',
             icon: 'icon-caidan',
-			children: [],
+            children: [],
         }]
 }]
 const second = []

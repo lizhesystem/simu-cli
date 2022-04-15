@@ -3,7 +3,7 @@ import axios from './router/axios';
 import VueAxios from 'vue-axios';
 import App from './App';
 import router from './router/router';
-import './permission'; // 权限
+// import './permission'; // 权限
 import './error'; // 日志
 import './cache';//页面缓冲
 import store from './store';
@@ -19,8 +19,6 @@ import i18n from './lang' // Internationalization
 import './styles/common.scss';
 import basicBlock from './components/basic-block/main'
 import basicContainer from './components/basic-container/main'
-//import promise from 'es6-promise';
-//promise.polyfill();
 
 Vue.use(router)
 Vue.use(VueAxios, axios)
